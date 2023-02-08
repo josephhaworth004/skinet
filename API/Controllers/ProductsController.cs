@@ -1,4 +1,5 @@
 using Core.Entities;
+using Core.Interfaces;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace API.Controllers
 {
     // This attribute means less code. Add it to every controller
-    [ApiController] 
+    [ApiController]  // Also maps parameters passed into the methods below
 
     // Add a route to get to the controller. All routes start with api
     [Route("api/[controller]")]
@@ -17,11 +18,11 @@ namespace API.Controllers
         // Set up dependency injection on constructor
         // See's 'StoreContext' in constructor and gets the service from program .cs
         // Will have access to all the db methods inside controller
-        private readonly StoreContext _context;
-        public ProductsController(StoreContext context)
+        private readonly IProductRepository _repo;
+        public ProductsController(IProductRepository repo)
         {
-            _context = context; // Same as this.context. Convention to use '_'
-            
+            //_context = context; is the Same as this.context. Convention to use '_'
+            _repo = repo;   
         }
         
         //End points
@@ -36,15 +37,27 @@ namespace API.Controllers
 
         public async Task<ActionResult<List<Product>>> GetProducts()
         {
-            var products = await _context.Products.ToListAsync();
-            return products;
+            var products = await _repo.GetProductsAsync();
+            return Ok(products);
         }
 
         // To get a specific thing we use pass a route parameter and then send it to the function as an arg
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id) // If a non integer is sent, the [Route] controller will flag an error
         {
-            return await _context.Products.FindAsync(id);
+            return await _repo.GetProductByIdAsync(id);
+        }
+
+        [HttpGet("brands")]
+        public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetProductBrands()
+        {
+            return Ok(await _repo.GetProductBrandsAsync());
+        }
+
+        [HttpGet("types")]
+        public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetProductTypes()
+        {
+            return Ok(await _repo.GetProductTypesAsync());
         }
     }
 }
