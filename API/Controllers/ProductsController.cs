@@ -1,8 +1,9 @@
 using Core.Entities;
 using Core.Interfaces;
-using Infrastructure.Data;
+using Core.Specifications;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using API.Dtos;
+using AutoMapper;
 
 namespace API.Controllers
 {
@@ -18,11 +19,24 @@ namespace API.Controllers
         // Set up dependency injection on constructor
         // See's 'StoreContext' in constructor and gets the service from program .cs
         // Will have access to all the db methods inside controller
-        private readonly IProductRepository _repo;
-        public ProductsController(IProductRepository repo)
+       
+        //private readonly IProductRepository _repo;
+        private readonly IGenericRepository<Product> _productsRepo;
+        private readonly IGenericRepository<ProductBrand> _productBrandRepo;
+        private readonly IMapper _mapper;
+        private readonly IGenericRepository<ProductType> _productTypeRepo;
+
+        public ProductsController(IGenericRepository<Product> productsRepo,
+            IGenericRepository<ProductType> productTypeRepo,
+            IGenericRepository<ProductBrand> productBrandRepo,
+            IMapper mapper)
         {
             //_context = context; is the Same as this.context. Convention to use '_'
-            _repo = repo;   
+            // _repo = repo;   
+            _mapper = mapper;
+            _productsRepo = productsRepo;
+            _productTypeRepo = productTypeRepo;
+            _productBrandRepo = productBrandRepo;
         }
         
         //End points
@@ -35,29 +49,39 @@ namespace API.Controllers
         // async avoids this. The thread is freed up while that request is processing.
         // Helps concurrent threading
 
-        public async Task<ActionResult<List<Product>>> GetProducts()
+        public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts()
         {
-            var products = await _repo.GetProductsAsync();
-            return Ok(products);
+            // ListAsync declared in IGenericRepo and implemented in GenericRepository 
+            // It has (ISpecification<T> spec) as an arg
+            // Will create a specification class: ProductsWithTypesAndBrandsSpecification.cs
+            var spec = new ProductsWithTypesAndBrandsSpecification();
+            
+            var products = await _productsRepo.ListAsync(spec); 
+            
+            return Ok(_mapper
+                .Map<IReadOnlyList<Product>, IReadOnlyList<ProductToReturnDto>>(products));
         }
 
         // To get a specific thing we use pass a route parameter and then send it to the function as an arg
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id) // If a non integer is sent, the [Route] controller will flag an error
+        public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id) // If a non integer is sent, the [Route] controller will flag an error
         {
-            return await _repo.GetProductByIdAsync(id);
+            var spec = new ProductsWithTypesAndBrandsSpecification(id);
+            var product = await _productsRepo.GetEntityWithSpec(spec);
+
+            return _mapper.Map<Product, ProductToReturnDto>(product);
         }
 
         [HttpGet("brands")]
         public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetProductBrands()
         {
-            return Ok(await _repo.GetProductBrandsAsync());
+            return Ok(await _productBrandRepo.ListAllAsync());
         }
 
         [HttpGet("types")]
         public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetProductTypes()
         {
-            return Ok(await _repo.GetProductTypesAsync());
+            return Ok(await _productTypeRepo.ListAllAsync());
         }
     }
 }

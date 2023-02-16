@@ -23,6 +23,14 @@ builder.Services.AddDbContext<StoreContext>(opt => {
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
+// Generic Repository doesn't have a type yet
+// need to use the typeof command for the Interface and the class and use empty <>
+// This will register it as a service
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+// Use below for the mapping service setup in MappingProfiles.cs
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -42,6 +50,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// For use with images
+app.UseStaticFiles();
 
 app.UseAuthorization();
 
