@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers;
 
 [ApiController]
+// Tell swagger to ignore this
+[ApiExplorerSettings(IgnoreApi = true )]
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {

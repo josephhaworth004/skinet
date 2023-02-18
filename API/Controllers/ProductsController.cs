@@ -4,16 +4,11 @@ using Core.Specifications;
 using Microsoft.AspNetCore.Mvc;
 using API.Dtos;
 using AutoMapper;
+using API.Errors;
 
 namespace API.Controllers
 {
-    // This attribute means less code. Add it to every controller
-    [ApiController]  // Also maps parameters passed into the methods below
-
-    // Add a route to get to the controller. All routes start with api
-    [Route("api/[controller]")]
-
-    public class ProductsController : ControllerBase // Derives from framework class called controllerbase. Allows http end-points
+    public class ProductsController : BaseApiController // Derives from framework class called controllerbase. Allows http end-points
     {
         // Get access to db context so we can query db
         // Set up dependency injection on constructor
@@ -64,10 +59,18 @@ namespace API.Controllers
 
         // To get a specific thing we use pass a route parameter and then send it to the function as an arg
         [HttpGet("{id}")]
+        
+        // Tell Swagger about status codes
+        // Below is an example. It would make verbose code to do this for all http requests
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+
         public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id) // If a non integer is sent, the [Route] controller will flag an error
         {
             var spec = new ProductsWithTypesAndBrandsSpecification(id);
             var product = await _productsRepo.GetEntityWithSpec(spec);
+
+            if (product == null) return NotFound(new ApiResponse(404));
 
             return _mapper.Map<Product, ProductToReturnDto>(product);
         }

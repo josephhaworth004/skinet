@@ -1,4 +1,5 @@
-using Core.Interfaces;
+using API.Extensions;
+using API.Middleware;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,25 +16,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// Set up database context. StoreContext is the name of the class in StoreContext.cs
-// opt => is a lambda. Execute commands in between {} based on opt
-builder.Services.AddDbContext<StoreContext>(opt => {
-    opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+// Most services moved to ApplicationServicesExtensions.cs.
+builder.Services.AddApplicationServices(builder.Configuration);
 
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
-// Generic Repository doesn't have a type yet
-// need to use the typeof command for the Interface and the class and use empty <>
-// This will register it as a service
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
-// Use below for the mapping service setup in MappingProfiles.cs
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 // End of Services
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -45,11 +30,12 @@ var app = builder.Build();
 // Middleware
 
 // Configure the HTTP request pipeline. 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseMiddleware<ExceptionMiddleware>();
+
+app.UseStatusCodePagesWithReExecute("/errors/{0}");
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // For use with images
 app.UseStaticFiles();
