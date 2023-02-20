@@ -40,6 +40,8 @@ app.UseSwaggerUI();
 // For use with images
 app.UseStaticFiles();
 
+app.UseCors("CorsPolicy");
+
 app.UseAuthorization();
 
 app.MapControllers();

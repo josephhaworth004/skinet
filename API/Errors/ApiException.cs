@@ -7,6 +7,7 @@ namespace API.Errors
             Details = details;
         }
 
+        // Details will contain thr stack trace of 500 errors
         public string Details { get; set; }
     }
 }

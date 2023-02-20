@@ -20,6 +20,26 @@ namespace Infrastructure.Data
                 query = query.Where(spec.Criteria);
             }
 
+            // Ordering is important. We can't sort (or page) before we've filtered
+            // as we wouldn't know which subset of data we had.
+            if (spec.OrderBy != null)
+            {
+                query = query.OrderBy(spec.OrderBy);
+            }
+
+            if (spec.OrderByDescending != null)
+            {
+                query = query.OrderByDescending(spec.OrderByDescending);
+            }
+
+            // Ordering is important. We can't page (or sort) before we've filtered
+            // as we wouldn't know which subset of data we had.
+            if (spec.IsPagingEnabled)
+            {
+                query = query.Skip(spec.Skip).Take(spec.Take);
+            } //end-if
+
+
             /* Code below takes out includes...
                  .Include(p => p.ProductType)
                 .Include(p => p.ProductBrand)
