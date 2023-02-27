@@ -4,12 +4,5 @@
 <app-nav-bar></app-nav-bar>
 
 <div class="container" style="margin-top: 140px;">
-    <h1>Welcome to {{title}}</h1>
-    <ul>
-        <!-- loop over product array we have in component -->
-        <!--ngFor is a structural Directive. These can add/remove object from DOM-->
-        <li class="list-unstyled" *ngFor="let product of products">
-            {{product.name}}
-        </li>
-    </ul>
+   <app-shop></app-shop>
 </div>
